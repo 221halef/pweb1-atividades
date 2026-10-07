@@ -12,7 +12,7 @@
 
 **1.1 Antes de executar: qual é o erro do código? Em que linha ele está?**
 
-_(responda aqui)_
+Estava faltando ponto e vírgula na segunda do código
 
 ## 2. Saídas do terminal
 
@@ -21,22 +21,28 @@ _(responda aqui)_
 **2.1 Log do servidor ao abrir a página com `display_errors=1`**
 
 ```text
-(cole aqui a saída do terminal)
+[Wed Oct  7 16:17:43 2026] PHP 8.5.11 Development Server (http://localhost:8000) started
+[Wed Oct  7 16:17:48 2026] [::1]:47808 Accepted
+[Wed Oct  7 16:17:48 2026] [::1]:47808 [200]: GET /q02-erros/erro.php
+[Wed Oct  7 16:17:48 2026] [::1]:47808 Closing
 ```
 
 **Explicação linha por linha:**
 
-_(responda aqui)_
+A primeira linha indica a data, hora e endereço em que o servidor local do PHP foi iniciado. A segunda linha mostra que o servidor aceitou uma nova conexão local ([::1]) na porta 47808. A terceira linha registra a requisição para acessar o arquivo /q02-erros/erro.php pelo método GET, retornando o código [200] de sucesso. A quarta linha indica que a conexão foi encerrada logo após o envio da resposta.
 
 **2.2 Log do servidor ao abrir a página com `display_errors=0`**
 
 ```text
-(cole aqui a saída do terminal)
+[Wed Oct  7 16:20:51 2026] PHP 8.5.11 Development Server (http://localhost:8000) started
+[Wed Oct  7 16:21:31 2026] [::1]:56002 Accepted
+[Wed Oct  7 16:21:31 2026] [::1]:56002 [200]: GET /q02-erros/erro.php
+[Wed Oct  7 16:21:31 2026] [::1]:56002 Closing
 ```
 
 **Explicação linha por linha:**
 
-_(responda aqui)_
+A primeira linha indica a data, hora e endereço em que o servidor local do PHP foi iniciado. A segunda linha mostra que o servidor aceitou uma nova conexão local ([::1]) na porta 56002. A terceira linha registra a requisição para acessar o arquivo /q02-erros/erro.php pelo método GET, retornando o código [200] de sucesso. A quarta linha indica que a conexão foi encerrada logo após o envio da resposta.
 
 ## 3. Perguntas
 
