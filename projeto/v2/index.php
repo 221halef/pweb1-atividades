@@ -205,13 +205,13 @@ if ($pagina === 'inicio') {
     $titulo = 'Projetos';
 } elseif ($pagina === 'projeto') {
     $id = (int) ($_GET['id'] ?? 0);
-    $projetoAtual = $perfil->getProjetos()[$id] ?? null;
-    if ($projetoAtual !== null) {
+    try {
+        $projetoAtual = $perfil->getProjeto($id);
         $titulo = $projetoAtual->getTitulo();
-    } else {
+    } catch (Exception $e) {
         http_response_code(404);
         $pagina = 'projeto-nao-encontrado';
-        $titulo = 'Projeto não encontrado';
+        $titulo = $e->getMessage();
     }
 } else {
     http_response_code(404);
@@ -273,7 +273,7 @@ if ($pagina === 'inicio') {
     <p><a href="?pagina=projetos">Voltar para projetos</a></p>
 
     <?php elseif ($pagina === 'projeto-nao-encontrado'): ?>
-      <h2>Projeto não encontrado</h2>
+      <h2><?= htmlspecialchars($titulo) ?></h2>
       <p><a href="?pagina=projetos">Voltar para projetos</a></p>
 
     <?php else: ?>
