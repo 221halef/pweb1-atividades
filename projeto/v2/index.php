@@ -128,12 +128,14 @@ class Perfil
         }
 
         return [
-            'nome' => $this->nome,
-            'curso' => $this->curso,
-            'campus' => $this->campus,
-            'cidade' => $this->cidade,
-            'apresentacao' => $this->apresentacao,
-            'habilidades' => $this->habilidades,
+            'perfil' => [
+                'nome' => $this->nome,
+                'curso' => $this->curso,
+                'campus' => $this->campus,
+                'cidade' => $this->cidade,
+                'apresentacao' => $this->apresentacao,
+                'habilidades' => $this->habilidades,
+            ],
             'projetos' => $projetos,
         ];
     }
@@ -187,7 +189,7 @@ if ($tema === 'claro') {
 if (isset($_GET['formato']) && $_GET['formato'] === 'json') {
     header('Content-Type: application/json; charset=utf-8');
     echo json_encode(
-        ['perfil' => $perfil, 'projetos' => $projetos],
+        $perfil->paraArray(),
         JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE
     );
     exit;
