@@ -1,45 +1,175 @@
-# Perfil do Estudante: versão 1
+# Perfil do Estudante: versão 2 (com classes)
 
 **Autor(a):** Halef
 
 ## Como executar
 
 ```
-cd projeto/v1
-php -S localhost:8000 -d display_errors=1 -d output_buffering=0
+cd projeto/v2
+php -S localhost:8000
 ```
 
 Abra http://localhost:8000
 
-## Telas
+## 1. Telas
 
 | Tema claro | Tema escuro |
 |---|---|
 | ![Tema claro](prints/claro.png) | ![Tema escuro](prints/escuro.png) |
 
-## 1. Mapa de rotas
+## 2. As classes
 
-| URL | O que mostra | Status |
+### 2.1 Classe `Projeto`
+
+**Atributos**
+
+| Atributo | Tipo | Visibilidade |
 |---|---|---|
-| `/` | Página inicial: nome, curso, campus, cidade e texto sobre mim | 200 |
-| `/?pagina=habilidades` | Minhas habilidades e o total delas | 200 |
-| `/?pagina=projetos` | Cartões com os 3 projetos e link para os detalhes | 200 |
-| `/?pagina=projeto&id=1` | Título, descrição e tecnologias do projeto 1 | 200 |
-| `/?pagina=projeto&id=99` | Mensagem "Projeto não encontrado" | 404 |
-| `/?pagina=qualquercoisa` | Mensagem "Página não encontrada" | 404 |
-| `/?tema=escuro` | A página inicial com o tema escuro, gravado em cookie | 200 |
-| `/?formato=json` | Todos os dados do perfil em JSON, sem HTML | 200 |
+| `$titulo` | `string` | `private` |
+| `$descricao` | `string` | `private` |
+| `$tecnologias` | `string` | `private` |
 
-## 2. Saídas do terminal
+**Métodos**
 
-**2.1 Uma página que existe:** `curl.exe -i "http://localhost:8000/?pagina=habilidades"` (cole só até o início do HTML)
+| Método | O que faz |
+|---|---|
+| `__construct(string $titulo, string $descricao, string $tecnologias)` | Recebe os três valores. Se o título estiver vazio (`trim($titulo) === ''`), lança uma exceção com a mensagem `O projeto precisa de um título.`; se estiver tudo certo, guarda os valores. |
+| `getTitulo(): string` | Devolve o título. |
+| `getDescricao(): string` | Devolve a descrição. |
+| `getTecnologias(): string` | Devolve as tecnologias. |
+| `paraArray(): array` | Devolve `titulo`, `descricao` e `tecnologias` em um array associativo, para o `json_encode` conseguir ler. |
+
+### 2.2 Classe `Perfil`
+
+**Atributos**
+
+| Atributo | Tipo | Visibilidade |
+|---|---|---|
+| `$nome` | `string` | `private` |
+| `$curso` | `string` | `private` |
+| `$campus` | `string` | `private` |
+| `$cidade` | `string` | `private` |
+| `$apresentacao` | `string` | `private` |
+| `$habilidades` | `array` | `private` |
+| `$projetos` | `array` (começa vazio) | `private` |
+
+**Métodos**
+
+| Método | O que faz |
+|---|---|
+| `__construct(string $nome, string $curso, string $campus, string $cidade, string $apresentacao, array $habilidades)` | Recebe tudo, menos os projetos. Se houver menos de 5 habilidades, lança uma exceção com a mensagem `O perfil precisa de pelo menos 5 habilidades.`; se estiver tudo certo, guarda os valores. |
+| `adicionarProjeto(Projeto $projeto): void` | Guarda o projeto na lista, numerando a partir de 1 (`count($this->projetos) + 1`). O tipo `Projeto` na assinatura recusa qualquer outra coisa. |
+| `getProjeto(int $id): Projeto` | Devolve o projeto com aquele número. Se ele não existir, lança uma exceção com a mensagem `Projeto não encontrado.` |
+| `getNome()`, `getCurso()`, `getCampus()`, `getCidade()`, `getApresentacao()` | Devolvem cada atributo de texto. |
+| `getHabilidades(): array` | Devolve a lista de habilidades. |
+| `getProjetos(): array` | Devolve a lista de objetos `Projeto`, com os números como chaves. |
+| `paraArray(): array` | Devolve `perfil` (os dados pessoais e as habilidades) e `projetos`, com cada projeto convertido pelo seu próprio `paraArray()`. |
+
+## 3. Antes e depois
+
+### 3.1 O 404 do projeto
+
+**Antes (v1):** a página olhava dentro do array para saber se o projeto existia.
+
+```php
+} elseif ($pagina === 'projeto') {
+    $id = (int) ($_GET['id'] ?? 0);
+    if (isset($projetos[$id])) {
+        $titulo = $projetos[$id]['titulo'];
+    } else {
+        http_response_code(404);
+        $pagina = 'projeto-nao-encontrado';
+        $titulo = 'Projeto não encontrado';
+    }
+}
+```
+
+**Depois (v2):** quem sabe se o projeto existe é o `Perfil`. A página só pergunta e reage se ele recusar.
+
+```php
+} elseif ($pagina === 'projeto') {
+    $id = (int) ($_GET['id'] ?? 0);
+    try {
+        $projetoAtual = $perfil->getProjeto($id);
+        $titulo = $projetoAtual->getTitulo();
+    } catch (Exception $e) {
+        http_response_code(404);
+        $pagina = 'projeto-nao-encontrado';
+        $titulo = $e->getMessage();
+    }
+}
+```
+
+**O que mudou:** o `isset` e a chave `['titulo']` saíram do `index.php`. Agora o código chama `getProjeto()` e `getTitulo()`, que são métodos da classe.
+
+**O que melhorou:**
+
+- Se eu digitar errado a chave na v1 (`$projetos[$id]['titulo ']`), o PHP só avisa e devolve vazio. Na v2, um método com nome errado dá erro na hora.
+- A regra "esse projeto não existe" fica em um lugar só, dentro de `Perfil::getProjeto()`, e a mensagem de erro vem da própria classe (`$e->getMessage()`), em vez de um texto repetido no HTML.
+- Se um dia a lista de projetos deixar de ser um array, o `index.php` não precisa mudar.
+
+### 3.2 A página de projetos
+
+**Antes (v1):**
+
+```php
+<?php foreach ($projetos as $numero => $projeto): ?>
+  <h3><?= htmlspecialchars($projeto['titulo']) ?></h3>
+  <p><?= htmlspecialchars($projeto['tecnologias']) ?></p>
+```
+
+**Depois (v2):**
+
+```php
+<?php foreach ($perfil->getProjetos() as $numero => $projeto): ?>
+  <h3><?= htmlspecialchars($projeto->getTitulo()) ?></h3>
+  <p><?= htmlspecialchars($projeto->getTecnologias()) ?></p>
+```
+
+**O que mudou e melhorou:** o visual é o mesmo, mas o HTML agora só usa a interface pública das classes (os getters). Como o `foreach` percorre `getProjetos()`, se eu adicionar um quarto projeto com `adicionarProjeto`, ele aparece na lista, nos detalhes (`id=4`) e no JSON sem mudar o HTML.
+
+## 4. As classes se recusam
+
+Para testar, troquei temporariamente os dados, rodei o servidor, copiei a mensagem do log e desfiz a alteração antes do commit.
+
+**4.1 Projeto sem título.** Troquei o título do primeiro projeto por `''`:
+
+```text
+PHP Fatal error:  Uncaught Exception: O projeto precisa de um título. in .../projeto/v2/index.php:11
+Stack trace:
+#0 .../projeto/v2/index.php(154): Projeto->__construct()
+#1 {main}
+  thrown in .../projeto/v2/index.php on line 11
+[::1]:59626 [500]: GET / - Uncaught Exception: O projeto precisa de um título.
+```
+
+**Explicação:** a mensagem vem da linha 11, que é o `throw new Exception(...)` dentro do construtor de `Projeto`. O `Stack trace` mostra que o construtor foi chamado na linha 154, no `new Projeto('', ...)` do `index.php`. O `throw` acontece antes de os atributos serem guardados, e o `new` não termina: a exceção interrompe o construtor, então nenhum objeto é entregue e nada chega a ser adicionado ao perfil. Como nenhum `try/catch` pegou a exceção, o PHP encerrou o script com `Fatal error`, e o servidor respondeu `500` sem enviar a página.
+
+**4.2 Perfil com poucas habilidades.** Deixei só 4 habilidades (`['HTML', 'CSS', 'PHP', 'Git']`):
+
+```text
+PHP Fatal error:  Uncaught Exception: O perfil precisa de pelo menos 5 habilidades. in .../projeto/v2/index.php:63
+Stack trace:
+#0 .../projeto/v2/index.php(145): Perfil->__construct()
+#1 {main}
+  thrown in .../projeto/v2/index.php on line 63
+[::1]:59630 [500]: GET / - Uncaught Exception: O perfil precisa de pelo menos 5 habilidades.
+```
+
+**Explicação:** a mensagem vem da linha 63, o `throw` dentro do construtor de `Perfil`, que confere `count($habilidades) < 5` antes de guardar qualquer coisa. O construtor foi chamado na linha 145, no `new Perfil(...)`. Como o `new` não termina, a variável `$perfil` nunca recebe um objeto, e por isso o script nem chega a mostrar a página. O resultado é o mesmo: `Fatal error` e status `500`.
+
+**Por que isso é melhor que os arrays da v1:** na v1, um projeto sem título ou um perfil com 4 habilidades existiriam normalmente. Agora a regra mora dentro da classe, e um objeto inválido não consegue ser criado.
+
+## 5. Saídas do terminal
+
+**5.1 Um projeto que existe:** `curl -i "http://localhost:8000/?pagina=projeto&id=2"` (até o início do HTML)
 
 ```text
 HTTP/1.1 200 OK
 Host: localhost:8000
-Date: Wed, 28 Oct 2026 21:47:13 GMT
+Date: Thu, 29 Oct 2026 01:20:07 GMT
 Connection: close
-X-Powered-By: PHP/8.3.6
+X-Powered-By: PHP/8.5.12
 Content-type: text/html; charset=UTF-8
 
 <!DOCTYPE html>
@@ -47,24 +177,22 @@ Content-type: text/html; charset=UTF-8
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Habilidades | Meu perfil</title>
+  <title>PizzarIA | Meu perfil</title>
   <link rel="stylesheet" href="estilo.css">
 </head>
 <body class="tema-claro">
 ```
 
-**Explicação:**
+**Explicação:** `200 OK` quer dizer que `getProjeto(2)` encontrou o projeto e não lançou exceção. O `<title>` é `PizzarIA` porque o `index.php` usou `$projetoAtual->getTitulo()`. O `<body>` está com `tema-claro` porque não havia tema na URL nem cookie.
 
-A primeira linha mostra que usei o protocolo HTTP/1.1 e que a resposta foi `200 OK`, ou seja, a página existe. `Content-type: text/html` diz ao navegador que o conteúdo é HTML. `X-Powered-By` mostra que quem respondeu foi o PHP. Depois da linha em branco começa o corpo, que é o HTML gerado pelo `index.php`. O `<title>` é "Habilidades" porque o PHP trocou o título conforme a página pedida, e o `<body>` está com a classe `tema-claro` porque não havia tema na URL nem cookie.
-
-**2.2 Uma página que não existe:** `curl.exe -i "http://localhost:8000/?pagina=projeto&id=99"` (cole só até o início do HTML)
+**5.2 Um projeto que não existe:** `curl -i "http://localhost:8000/?pagina=projeto&id=99"` (até o início do HTML)
 
 ```text
 HTTP/1.1 404 Not Found
 Host: localhost:8000
-Date: Wed, 28 Oct 2026 21:47:13 GMT
+Date: Thu, 29 Oct 2026 01:20:07 GMT
 Connection: close
-X-Powered-By: PHP/8.3.6
+X-Powered-By: PHP/8.5.12
 Content-type: text/html; charset=UTF-8
 
 <!DOCTYPE html>
@@ -72,55 +200,27 @@ Content-type: text/html; charset=UTF-8
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Projeto não encontrado | Meu perfil</title>
+  <title>Projeto não encontrado. | Meu perfil</title>
   <link rel="stylesheet" href="estilo.css">
 </head>
 <body class="tema-claro">
 ```
 
-**Explicação:**
+**Explicação:** `getProjeto(99)` não achou o projeto e lançou a exceção `Projeto não encontrado.`. O `catch` pegou a exceção, chamou `http_response_code(404)` e usou `$e->getMessage()` como título, e por isso o `<title>` mostra o texto com ponto final. Diferente da v1, esse texto vem da classe, não do HTML.
 
-Aqui a primeira linha é `404 Not Found`. Isso acontece porque `isset($projetos[99])` é falso, então o PHP chama `http_response_code(404)` antes de qualquer HTML. O resto da resposta continua sendo uma página HTML normal, com a mensagem "Projeto não encontrado" e o mesmo cabeçalho e rodapé. O status 404 é o que avisa o navegador e outros programas de que o recurso não existe.
-
-**2.3 A troca de tema:** `curl.exe -i "http://localhost:8000/?tema=escuro"` (cole só até a linha do `<body>`)
+**5.3 A API:** `curl -i "http://localhost:8000/?formato=json"`
 
 ```text
 HTTP/1.1 200 OK
 Host: localhost:8000
-Date: Wed, 28 Oct 2026 21:47:13 GMT
+Date: Thu, 29 Oct 2026 01:20:07 GMT
 Connection: close
-X-Powered-By: PHP/8.3.6
-Set-Cookie: tema=escuro; expires=Fri, 27 Nov 2026 21:47:13 GMT; Max-Age=2592000
-Content-type: text/html; charset=UTF-8
-
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Início | Meu perfil</title>
-  <link rel="stylesheet" href="estilo.css">
-</head>
-<body class="tema-escuro">
-```
-
-**Explicação (qual cabeçalho grava o tema e como o PHP sabe o tema na próxima requisição):**
-
-O cabeçalho `Set-Cookie: tema=escuro` é o que grava o tema. Ele vem do `setcookie` e dura 30 dias (`Max-Age=2592000` segundos). O navegador guarda esse cookie e, em toda requisição seguinte ao site, envia `Cookie: tema=escuro`, e o PHP lê isso em `$_COOKIE['tema']`. Na mesma requisição em que o `setcookie` é chamado, o `$_COOKIE` ainda não tem o valor novo, porque ele só volta do navegador na próxima visita. Por isso a linha `$_GET['tema'] ?? $_COOKIE['tema'] ?? 'claro'` dá prioridade à URL: assim o `<body>` já sai com `tema-escuro` nessa mesma resposta.
-
-**2.4 A API:** `curl.exe -i "http://localhost:8000/?formato=json"`
-
-```text
-HTTP/1.1 200 OK
-Host: localhost:8000
-Date: Wed, 28 Oct 2026 21:47:13 GMT
-Connection: close
-X-Powered-By: PHP/8.3.6
+X-Powered-By: PHP/8.5.12
 Content-Type: application/json; charset=utf-8
 
 {
     "perfil": {
-        "nome": "Halef",
+        "nome": "João",
         "curso": "Tecnologia em Análise e Desenvolvimento de Sistemas",
         "campus": "IFCE Campus Boa Viagem",
         "cidade": "Boa Viagem, CE",
@@ -141,8 +241,8 @@ Content-Type: application/json; charset=utf-8
             "tecnologias": "PHP, HTML"
         },
         "2": {
-            "titulo": "AgroAssist",
-            "descricao": "Projeto de requisitos e arquitetura de software feito em equipe na disciplina de Arquitetura de Sistemas.",
+            "titulo": "PizzarIA",
+            "descricao": "Sistema de pizzaria com atendimento por IA.",
             "tecnologias": "UML, Arquitetura de software"
         },
         "3": {
@@ -154,55 +254,25 @@ Content-Type: application/json; charset=utf-8
 }
 ```
 
-**Explicação:**
-
-O cabeçalho `Content-Type: application/json; charset=utf-8` avisa que o corpo é JSON, e não HTML. Ele foi enviado com `header()` antes de qualquer saída. O corpo começa direto em `{`, sem `<!DOCTYPE>`, porque o `exit` encerra o script antes do HTML. O `json_encode` transformou os arrays `$perfil` e `$projetos` em JSON. `JSON_PRETTY_PRINT` deixou o texto identado e `JSON_UNESCAPED_UNICODE` manteve acentos como "Análise" em vez de `\u00e1`.
-
-**2.5 Log do servidor** das quatro requisições acima
+**Explicação:** o cabeçalho `Content-Type: application/json; charset=utf-8` e as opções do `json_encode` (`JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE`) são os mesmos da v1. O que mudou é a origem dos dados: agora o `json_encode` recebe `$perfil->paraArray()`. Para provar que o resultado é igual ao da v1, salvei o JSON das duas versões (v1 na porta 8001 e v2 na porta 8000) e comparei com `diff`:
 
 ```text
-[Wed Oct 28 21:47:12 2026] PHP 8.3.6 Development Server (http://localhost:8000) started
-[Wed Oct 28 21:47:13 2026] 127.0.0.1:37558 Accepted
-[Wed Oct 28 21:47:13 2026] 127.0.0.1:37558 [200]: GET /?pagina=habilidades
-[Wed Oct 28 21:47:13 2026] 127.0.0.1:37558 Closing
-[Wed Oct 28 21:47:13 2026] 127.0.0.1:37568 Accepted
-[Wed Oct 28 21:47:13 2026] 127.0.0.1:37568 [404]: GET /?pagina=projeto&id=99
-[Wed Oct 28 21:47:13 2026] 127.0.0.1:37568 Closing
-[Wed Oct 28 21:47:13 2026] 127.0.0.1:37582 Accepted
-[Wed Oct 28 21:47:13 2026] 127.0.0.1:37582 [200]: GET /?tema=escuro
-[Wed Oct 28 21:47:13 2026] 127.0.0.1:37582 Closing
-[Wed Oct 28 21:47:13 2026] 127.0.0.1:37596 Accepted
-[Wed Oct 28 21:47:13 2026] 127.0.0.1:37596 [200]: GET /?formato=json
-[Wed Oct 28 21:47:13 2026] 127.0.0.1:37596 Closing
+1136 /tmp/v1.json
+1136 /tmp/v2.json
+2272 total
+(sem diferenças)
 ```
 
-**Explicação:**
+## 6. Perguntas
 
-Cada requisição gera três linhas. `Accepted` é a conexão aberta pelo cliente. Depois vem o status e o que foi pedido, como `[404]: GET /?pagina=projeto&id=99`. Por fim, `Closing` encerra a conexão. O número depois do IP (`37558`, `37568`...) é a porta do cliente e muda a cada requisição. Os status do log batem com os do `curl`: 200, 404, 200 e 200.
+**(a) Por que `json_encode($perfil)` devolve `{}`?**
 
-## 3. Onde usei cada conceito
+Porque o `json_encode` só consegue ler os atributos `public` de um objeto, e os atributos de `Perfil` são `private`. De fora da classe, o `json_encode` não enxerga nenhum deles, então o objeto parece vazio e vira `{}`. É por isso que as classes têm o método `paraArray()`: de dentro da classe, ele pode ler os atributos privados e montar um array comum, que o `json_encode` sabe converter.
 
-| Conceito | Linha(s) do `index.php` | Para que usei |
-|---|---|---|
-| Array associativo | 3 a 28 | Guardar os dados em `$perfil` e `$projetos` |
-| `$_GET` e `??` | 31, 58 | Ler o tema e a página pedidos pela URL, com valor padrão |
-| `if` / `elseif` / `else` | 33, 61 a 80, 105 em diante | Validar o tema e escolher qual página mostrar |
-| `htmlspecialchars` | 87, 90, 93 em diante | Proteger todo texto que vai para o HTML |
-| `setcookie` e `$_COOKIE` | 31, 38 | Gravar o tema por 30 dias e lê-lo nas próximas visitas |
-| `http_response_code(404)` | 72, 77 | Responder 404 para projeto ou página inexistente |
-| `header` e `json_encode` | 49, 50 a 53 | Enviar o tipo JSON e transformar os arrays em JSON |
-| `implode` e `count` | 114, 115 | Juntar as habilidades em um texto e contá-las |
+**(b) Os objetos `$perfil` e `$projeto` continuam na memória do servidor depois que a página é enviada? Por quê?**
 
-## 4. Decisões e dificuldades
+Não. A cada requisição, o PHP executa o `index.php` do começo ao fim: cria os objetos com `new`, monta a página e, quando o script termina, libera a memória, junto com todos os objetos. Na próxima requisição tudo é criado de novo do zero. O log do servidor mostra isso: cada requisição tem seu próprio `Accepted` e `Closing`. É também por isso que o tema precisa de um cookie: o objeto não guarda nada entre uma visita e outra, então quem lembra a escolha é o navegador.
 
-**4.1 Por que toda a lógica PHP fica no topo do arquivo, antes do HTML?**
+**(c) Por que os atributos são `private`, e não `public`?**
 
-Porque `setcookie`, `header` e `http_response_code` mudam os cabeçalhos da resposta, e os cabeçalhos precisam ser enviados antes de qualquer conteúdo. Se eu escrevesse HTML antes, o PHP já teria começado a enviar o corpo e daria o erro `headers already sent`. Deixando a lógica no topo, eu decido status, cookie e JSON primeiro e só depois mostro o HTML.
-
-**4.2 Por que o tema escolhido na URL precisa ser validado?**
-
-Porque quem controla a URL é o usuário, e qualquer um pode escrever `?tema=<script>`. Esse valor vai para a classe do `<body>` e para o cookie. Sem validar, eu aceitaria um valor qualquer. Por isso só aceito `claro` ou `escuro`, e todo o resto vira `claro`. Além disso, uso `htmlspecialchars` em todas as saídas como uma segunda proteção.
-
-**4.3 Qual foi a maior dificuldade e como você resolveu?**
-
-A maior dificuldade foi entender que o cookie não aparece em `$_COOKIE` na mesma requisição em que o `setcookie` roda. Resolvi dando prioridade ao `$_GET['tema']` sobre o `$_COOKIE['tema']`, e testei com `curl -i` para ver o `Set-Cookie` na resposta.
+Para proteger as regras da classe. A validação mora no construtor: se os atributos fossem `public`, qualquer código poderia fazer `$projeto->titulo = ''` depois de o objeto ser criado e quebrar a regra "o projeto precisa de um título". Com `private`, o único jeito de mudar um dado é passar por métodos da classe, que podem validar. Isso também deixa a classe livre para mudar por dentro (por exemplo, trocar o array `$projetos` por outra estrutura) sem quebrar o `index.php`, que só usa os getters. E, na v1, uma chave digitada errada virava uma chave nova; aqui, tentar acessar um atributo privado de fora dá erro na hora.
