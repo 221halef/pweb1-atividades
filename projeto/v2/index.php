@@ -139,35 +139,32 @@ class Perfil
     }
 }
 
-// Dados do perfil
-$perfil = [
-// Dados do perfil
-$perfil = [
-    'nome' => 'João',
-    'curso' => 'Tecnologia em Análise e Desenvolvimento de Sistemas',
-    'campus' => 'IFCE Campus Boa Viagem',
-    'cidade' => 'Boa Viagem, CE',
-    'apresentacao' => 'Sou estudante de ADS e quero trabalhar como desenvolvedor backend com Java. Estou aprendendo programação web com PHP, HTML e CSS.',
-    'habilidades' => ['HTML', 'CSS', 'PHP', 'Git', 'Java', 'Linux'],
-];
+// Os objetos
+$perfil = new Perfil(
+    'João',
+    'Tecnologia em Análise e Desenvolvimento de Sistemas',
+    'IFCE Campus Boa Viagem',
+    'Boa Viagem, CE',
+    'Sou estudante de ADS e quero trabalhar como desenvolvedor backend com Java. Estou aprendendo programação web com PHP, HTML e CSS.',
+    ['HTML', 'CSS', 'PHP', 'Git', 'Java', 'Linux']
+);
 
-$projetos = [
-    1 => [
-        'titulo' => 'Calculadora de média',
-        'descricao' => 'Calcula a média de duas notas recebidas pela URL.',
-        'tecnologias' => 'PHP, HTML',
-    ],
-    2 => [
-        'titulo' => 'PizzarIA',
-        'descricao' => 'Sistema de pizzaria com atendimento por IA.',
-        'tecnologias' => 'UML, Arquitetura de software',
-    ],
-    3 => [
-        'titulo' => 'Perfil do Estudante',
-        'descricao' => 'Este site: um perfil pessoal com páginas, tema com cookie e API em JSON.',
-        'tecnologias' => 'PHP, HTML, CSS',
-    ],
-];
+$perfil->adicionarProjeto(new Projeto(
+    'Calculadora de média',
+    'Calcula a média de duas notas recebidas pela URL.',
+    'PHP, HTML'
+));
+$perfil->adicionarProjeto(new Projeto(
+    'PizzarIA',
+    'Sistema de pizzaria com atendimento por IA.',
+    'UML, Arquitetura de software'
+));
+$perfil->adicionarProjeto(new Projeto(
+    'Perfil do Estudante',
+    'Este site: um perfil pessoal com páginas, tema com cookie e API em JSON.',
+    'PHP, HTML, CSS'
+));
+
 
 // Tema
 $tema = $_GET['tema'] ?? $_COOKIE['tema'] ?? 'claro';
@@ -208,8 +205,9 @@ if ($pagina === 'inicio') {
     $titulo = 'Projetos';
 } elseif ($pagina === 'projeto') {
     $id = (int) ($_GET['id'] ?? 0);
-    if (isset($projetos[$id])) {
-        $titulo = $projetos[$id]['titulo'];
+    $projetoAtual = $perfil->getProjetos()[$id] ?? null;
+    if ($projetoAtual !== null) {
+        $titulo = $projetoAtual->getTitulo();
     } else {
         http_response_code(404);
         $pagina = 'projeto-nao-encontrado';
@@ -232,8 +230,8 @@ if ($pagina === 'inicio') {
 <body class="tema-<?= htmlspecialchars($tema) ?>">
   <!-- Cabeçalho -->
   <header>
-    <h1><?= htmlspecialchars($perfil['nome']) ?></h1>
-    <p><?= htmlspecialchars($perfil['curso']) ?></p>
+    <h1><?= htmlspecialchars($perfil->getNome()) ?></h1>
+    <p><?= htmlspecialchars($perfil->getCurso()) ?></p>
     <nav>
       <a href="?pagina=inicio">Início</a>
       <a href="?pagina=habilidades">Habilidades</a>
@@ -245,34 +243,34 @@ if ($pagina === 'inicio') {
   <!-- Conteúdo -->
   <main>
     <?php if ($pagina === 'inicio'): ?>
-      <h2>Sobre mim</h2>
-      <p><?= htmlspecialchars($perfil['apresentacao']) ?></p>
-      <p><strong>Curso:</strong> <?= htmlspecialchars($perfil['curso']) ?></p>
-      <p><strong>Campus:</strong> <?= htmlspecialchars($perfil['campus']) ?></p>
-      <p><strong>Cidade:</strong> <?= htmlspecialchars($perfil['cidade']) ?></p>
+    <h2>Sobre mim</h2>
+    <p><?= htmlspecialchars($perfil->getApresentacao()) ?></p>
+    <p><strong>Curso:</strong> <?= htmlspecialchars($perfil->getCurso()) ?></p>
+    <p><strong>Campus:</strong> <?= htmlspecialchars($perfil->getCampus()) ?></p>
+    <p><strong>Cidade:</strong> <?= htmlspecialchars($perfil->getCidade()) ?></p>
 
-    <?php elseif ($pagina === 'habilidades'): ?>
-      <h2>Habilidades</h2>
-      <p><?= htmlspecialchars(implode(', ', $perfil['habilidades'])) ?></p>
-      <p>Total: <?= count($perfil['habilidades']) ?> habilidades</p>
+  <?php elseif ($pagina === 'habilidades'): ?>
+    <h2>Habilidades</h2>
+    <p><?= htmlspecialchars(implode(', ', $perfil->getHabilidades())) ?></p>
+    <p>Total: <?= count($perfil->getHabilidades()) ?> habilidades</p>
 
-    <?php elseif ($pagina === 'projetos'): ?>
-      <h2>Projetos</h2>
-      <div class="cartoes">
-        <?php foreach ($projetos as $numero => $projeto): ?>
-          <div class="cartao">
-            <h3><?= htmlspecialchars($projeto['titulo']) ?></h3>
-            <p><?= htmlspecialchars($projeto['tecnologias']) ?></p>
-            <a href="?pagina=projeto&amp;id=<?= $numero ?>">Ver detalhes</a>
-          </div>
-        <?php endforeach; ?>
-      </div>
+  <?php elseif ($pagina === 'projetos'): ?>
+    <h2>Projetos</h2>
+    <div class="cartoes">
+      <?php foreach ($perfil->getProjetos() as $numero => $projeto): ?>
+        <div class="cartao">
+          <h3><?= htmlspecialchars($projeto->getTitulo()) ?></h3>
+          <p><?= htmlspecialchars($projeto->getTecnologias()) ?></p>
+          <a href="?pagina=projeto&amp;id=<?= $numero ?>">Ver detalhes</a>
+        </div>
+      <?php endforeach; ?>
+    </div>
 
-    <?php elseif ($pagina === 'projeto'): ?>
-      <h2><?= htmlspecialchars($projetos[$id]['titulo']) ?></h2>
-      <p><?= htmlspecialchars($projetos[$id]['descricao']) ?></p>
-      <p><strong>Tecnologias:</strong> <?= htmlspecialchars($projetos[$id]['tecnologias']) ?></p>
-      <p><a href="?pagina=projetos">Voltar para projetos</a></p>
+  <?php elseif ($pagina === 'projeto'): ?>
+    <h2><?= htmlspecialchars($projetoAtual->getTitulo()) ?></h2>
+    <p><?= htmlspecialchars($projetoAtual->getDescricao()) ?></p>
+    <p><strong>Tecnologias:</strong> <?= htmlspecialchars($projetoAtual->getTecnologias()) ?></p>
+    <p><a href="?pagina=projetos">Voltar para projetos</a></p>
 
     <?php elseif ($pagina === 'projeto-nao-encontrado'): ?>
       <h2>Projeto não encontrado</h2>
