@@ -9,6 +9,23 @@ Route::get('/', function () {
     ]);
 })->name('inicio');
 
+Route::get('/tabuada/{numero}', function (int $numero) {
+    $html = '';
+    for ($i = 1; $i <= 10; $i++) {
+        $html .= "{$numero} x {$i} = " . ($numero * $i) . '<br>';
+    }
+    return $html;
+})->whereNumber('numero');
+
+Route::get('/idade/{ano}', function (int $ano) {
+    $idade = (int) date('Y') - $ano;
+    return "Quem nasceu em {$ano} tem ou vai fazer {$idade} anos em " . date('Y') . '.';
+})->whereNumber('ano');
+
+Route::get('/boas-vindas-turma/{turma?}', function (string $turma = 'ADS') {
+    return "Bem-vinda, turma de {$turma}!";
+});
+
 Route::get('/meu-nome', function () {
     return 'Meu nome é Halef e estudo ADS no IFCE.';
 });
