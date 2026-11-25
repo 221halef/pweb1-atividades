@@ -90,7 +90,13 @@ Route::get('/contato', function () {
 })->name('contato');
 
 Route::get('/cardapio', function () {
-    return view('cardapio', ['pratos' => []]);
+    $pratos = [
+        ['nome' => 'Baião de dois', 'preco' => 18.0],
+        ['nome' => 'Tapioca de queijo', 'preco' => 8.5],
+        ['nome' => 'Cuscuz com ovo', 'preco' => 7.0],
+    ];
+
+    return view('cardapio', ['pratos' => $pratos]);
 })->name('cardapio');
 
 Route::get('/produtos', function () {
