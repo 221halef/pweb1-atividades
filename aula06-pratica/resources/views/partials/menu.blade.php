@@ -1,0 +1,8 @@
+<nav>
+    <a href="{{ route('inicio') }}">Início</a>
+    <a href="{{ route('produtos.index') }}">Produtos</a>
+    <a href="{{ route('cardapio') }}">Cardápio</a>
+    <a href="{{ route('sobre') }}">Sobre</a>
+    <a href="{{ route('contato') }}">Contato</a>
+</nav>
+<hr>
