@@ -13,6 +13,25 @@ Route::get('/meu-nome', function () {
     return 'Meu nome é Halef e estudo ADS no IFCE.';
 });
 
+$perfil = function (): array {
+    return [
+        'nome' => 'Halef',
+        'semestre' => 4,
+        'media' => 8.5,
+        'bolsista' => true,
+        'disciplinas' => ['Programação Web', 'Banco de Dados', 'Redes'],
+        'endereco' => ['cidade' => 'Fortaleza', 'uf' => 'CE'],
+    ];
+};
+
+Route::get('/perfil-json', function () use ($perfil) {
+    return response()->json($perfil());
+});
+
+Route::get('/perfil-criado', function () use ($perfil) {
+    return response()->json($perfil(), 201);
+});
+
 Route::get('/cartao', function () {
     return '
         <h2>Halef</h2>
