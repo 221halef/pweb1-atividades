@@ -3,9 +3,8 @@
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome', [
+    return view('inicio', [
         'titulo' => 'Feira Digital',
-        'conteudo' => '<p>Bem-vindo à Feira Digital.</p>',
     ]);
 })->name('inicio');
 
@@ -81,7 +80,7 @@ Route::get('/cartao', function () {
     ';
 });
 
-Route::get('/sobre', function () {
+Route::get('/quem-somos', function () {
     return response('Sobre a Feira Digital', 200)->header('Content-Type', 'text/plain');
 })->name('sobre');
 
@@ -89,7 +88,7 @@ Route::get('/contato', function () {
     return response('Contato: contato@feira.test', 200)->header('Content-Type', 'text/plain');
 })->name('contato');
 
-Route::get('/cardapio', function () {
+Route::get('/cardapio-do-dia', function () {
     $pratos = [
         ['nome' => 'Baião de dois', 'preco' => 18.0],
         ['nome' => 'Tapioca de queijo', 'preco' => 8.5],
