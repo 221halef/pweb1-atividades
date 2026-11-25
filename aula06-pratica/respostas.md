@@ -365,18 +365,52 @@ d) A vantagem é organização e manutenção: com o crescimento do projeto, a l
 ## A08: Estoque e categorias
 
 ### Saídas
-<!-- curl.exe -i de /produtos/categoria/doces, /produtos/categoria/frutas e /produtos/categoria/123 -->
 ```
-(cole aqui a saída do terminal)
+$ curl.exe -i http://127.0.0.1:8000/produtos
+HTTP/1.1 200 OK
+Content-Type: text/html; charset=utf-8
+    <title>Produtos da feira</title>
+    <li><a href="http://127.0.0.1:8000/produtos/1">Leite de cabra</a> — R$ 12,00 (20 em estoque)</li>
+    <li><a href="http://127.0.0.1:8000/produtos/2">Queijo coalho</a> — R$ 15,00 <strong>Esgotado</strong></li>
+    <li><a href="http://127.0.0.1:8000/produtos/3">Doce de leite</a> — R$ 10,00 (8 em estoque)</li>
+    <li><a href="http://127.0.0.1:8000/produtos/4">Mel de abelha</a> — R$ 22,00 (15 em estoque)</li>
+    <li><a href="http://127.0.0.1:8000/produtos/5">Bolo de cenoura</a> — R$ 9,00 (6 em estoque)</li>
+
+$ curl.exe -i http://127.0.0.1:8000/produtos/categoria/doces
+HTTP/1.1 200 OK
+Content-Type: text/html; charset=utf-8
+    <title>Produtos da feira — doces</title>
+    <li><a href="http://127.0.0.1:8000/produtos/3">Doce de leite</a> — R$ 10,00 (8 em estoque)</li>
+    <li><a href="http://127.0.0.1:8000/produtos/5">Bolo de cenoura</a> — R$ 9,00 (6 em estoque)</li>
+
+$ curl.exe -i http://127.0.0.1:8000/produtos/categoria/frutas
+HTTP/1.1 404 Not Found
+Content-Type: text/html; charset=utf-8
+        <title>Not Found</title>
+(página padrão de erro 404 do Laravel, gerada por abort(404) no método categoria)
+
+$ curl.exe -i http://127.0.0.1:8000/produtos/categoria/123
+HTTP/1.1 404 Not Found
+Content-Type: text/plain; charset=utf-8
+Página não encontrada
+(Route::fallback, porque whereAlpha('categoria') rejeitou "123")
+
+$ curl.exe -i http://127.0.0.1:8000/produtos/2
+HTTP/1.1 200 OK
+Content-Type: text/html; charset=utf-8
+    <p><strong>Categoria:</strong> laticinios</p>
+    <p><strong>Estoque:</strong> 0</p>
 ```
 
 ### Caminho da requisição
-_(ex.: GET /cardapio -> rota (web.php) -> CardapioController@index -> view cardapio -> HTML 200)_
+GET /produtos/categoria/doces -> rota (web.php, whereAlpha) -> ProdutoController@categoria -> array_filter -> view produtos.index -> HTML 200
 
 ### Respostas
-a) _(responda aqui)_
-b) _(responda aqui)_
-c) _(responda aqui)_
+a) Em `/produtos/categoria/frutas`, quem respondeu 404 foi o próprio `ProdutoController@categoria`: o `whereAlpha` aceitou `frutas` como palavra, o método executou, `array_filter` não encontrou produtos e `abort(404)` gerou a página padrão do Laravel (HTML, com `<title>Not Found</title>`). Em `/produtos/categoria/123`, quem respondeu foi o `Route::fallback`: o `whereAlpha` rejeitou o valor numérico, nenhuma rota casou e apareceu a página em texto "Página não encontrada" (`Content-Type: text/plain`).
+
+b) O `array_filter` preserva as chaves originais do array (por exemplo, os doces ficam com chaves `3` e `5`). Como `route('produtos.show', $id)` usa exatamente essa chave como `$id`, os links continuam apontando para osprodutos corretos — se as chaves fossem renumeradas para `0` e `1`, os links quebrariam ou levariam ao produto errado.
+
+c) É possível porque uma view é só um template: ela recebe os dados por variáveis e não sabe qual método do controller a enviou. Tanto `index()` quanto `categoria()` chamam `view('produtos.index', [...])` com um array `$produtos` (completo ou filtrado). A view percorre o que recebeu com `@foreach`; por isso o mesmo arquivo atende às duas rotas.
 
 
 ## A09: Um produto em JSON
