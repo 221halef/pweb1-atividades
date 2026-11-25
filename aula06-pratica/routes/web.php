@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CardapioController;
+use App\Http\Controllers\InscricaoController;
 use App\Http\Controllers\ProdutoController;
 use Illuminate\Support\Facades\Route;
 
@@ -81,6 +82,9 @@ Route::get('/cartao', function () {
         </ul>
     ';
 });
+
+Route::get('/inscricao', [InscricaoController::class, 'create'])->name('inscricao.create');
+Route::post('/inscricao', [InscricaoController::class, 'store'])->name('inscricao.store');
 
 Route::get('/quem-somos', function () {
     return response('Sobre a Feira Digital', 200)->header('Content-Type', 'text/plain');

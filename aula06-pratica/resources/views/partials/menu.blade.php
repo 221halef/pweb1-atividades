@@ -4,5 +4,6 @@
     <a href="{{ route('cardapio') }}">Cardápio</a>
     <a href="{{ route('sobre') }}">Sobre</a>
     <a href="{{ route('contato') }}">Contato</a>
+    <a href="{{ route('inscricao.create') }}">Inscrição</a>
 </nav>
 <hr>
