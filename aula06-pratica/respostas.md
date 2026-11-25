@@ -316,19 +316,50 @@ c) A mensagem foi `Route [sobree] not defined. (View: .../resources/views/partia
 ## A07: Do closure ao controller
 
 ### Saídas
-<!-- trecho da rota antes e depois, curl.exe -i de antes e de depois, mensagem de erro sem o use -->
 ```
-(cole aqui a saída do terminal)
+Antes (trecho de routes/web.php):
+Route::get('/cardapio-do-dia', function () {
+    $pratos = [
+        ['nome' => 'Baião de dois', 'preco' => 18.0],
+        ['nome' => 'Tapioca de queijo', 'preco' => 8.5],
+        ['nome' => 'Cuscuz com ovo', 'preco' => 7.0],
+    ];
+
+    return view('cardapio', ['pratos' => $pratos]);
+})->name('cardapio');
+
+Depois (trecho de routes/web.php):
+use App\Http\Controllers\CardapioController;
+...
+Route::get('/cardapio-do-dia', [CardapioController::class, 'index'])->name('cardapio');
+
+$ php artisan route:list --except-vendor | grep cardapio
+GET|HEAD  cardapio-do-dia ......... cardapio › CardapioController@index
+
+$ curl.exe -i http://127.0.0.1:8000/cardapio-do-dia (antes e depois, idêntico)
+HTTP/1.1 200 OK
+Content-Type: text/html; charset=utf-8
+            <p>Quantidade de pratos: 3</p>
+            <li>Baião de dois — R$ 18,00</li>
+            <li>Tapioca de queijo — R$ 8,50</li>
+            <li>Cuscuz com ovo — R$ 7,00</li>
+
+$ erro provocado: sem a linha use App\Http\Controllers\CardapioController;
+HTTP/1.1 500 Internal Server Error
+(local.ERROR: Target class [CardapioController] does not exist.)
 ```
 
 ### Caminho da requisição
-_(ex.: GET /cardapio -> rota (web.php) -> CardapioController@index -> view cardapio -> HTML 200)_
+GET /cardapio-do-dia -> rota (web.php) -> CardapioController@index -> pratos() -> view cardapio -> layout -> HTML 200
 
 ### Respostas
-a) _(responda aqui)_
-b) _(responda aqui)_
-c) _(responda aqui)_
-d) _(responda aqui)_
+a) O trecho "antes" e o "depois" estão acima. Saiu do `web.php` a montagem do array `$pratos` e a chamada `view('cardapio', ...)`; foi para `app/Http/Controllers/CardapioController.php`, nos métodos `pratos()` (privado, com os dados) e `index()` (que devolve a view). O `web.php` ficou só com o endereço, o controller, o método e o nome da rota.
+
+b) O caminho agora é `GET /cardapio-do-dia -> rota (web.php) -> CardapioController@index -> view cardapio -> HTML 200`. Entrou no desenho a parte **Controller** do MVC: a rota apenas encaminha para a classe, que decide quais dados mandar para a view.
+
+c) Sem o `use App\Http\Controllers\CardapioController;`, o `CardapioController::class` em `web.php` passou a valer o nome curto `CardapioController` no namespace global. O container tentou resolver essa classe e não a encontrou: `Target class [CardapioController] does not exist.` com 500. A linha `use` é o que traz a classe para o arquivo de rotas.
+
+d) A vantagem é organização e manutenção: com o crescimento do projeto, a lógica de "quais pratos existem" fica junto de outras ações do cardápio, fora do arquivo de rotas. Fica mais fácil testar, reutilizar o método `pratos()` e alterar a regra de negócio sem mexer no `web.php`. Para o usuário, a página é idêntica — a mudança é interna.
 
 
 ## A08: Estoque e categorias
