@@ -98,6 +98,10 @@ Route::get('/produtos/categoria/{categoria}', [ProdutoController::class, 'catego
     ->whereAlpha('categoria')
     ->name('produtos.categoria');
 
+Route::get('/produtos/{id}/json', [ProdutoController::class, 'showJson'])
+    ->whereNumber('id')
+    ->name('produtos.show-json');
+
 Route::get('/produtos/{id}', [ProdutoController::class, 'show'])
     ->whereNumber('id')
     ->name('produtos.show');

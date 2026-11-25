@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
 
 class ProdutoController extends Controller
 {
@@ -64,6 +65,17 @@ class ProdutoController extends Controller
             'produto' => $produtos[$id],
             'id' => $id,
         ]);
+    }
+
+    public function showJson(int $id): JsonResponse
+    {
+        $produtos = $this->produtos();
+
+        if (! isset($produtos[$id])) {
+            return response()->json(['erro' => "Produto {$id} não encontrado"], 404);
+        }
+
+        return response()->json(['id' => $id] + $produtos[$id]);
     }
 
     public function categoria(string $categoria): View
