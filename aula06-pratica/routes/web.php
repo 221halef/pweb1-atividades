@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CardapioController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -88,15 +89,7 @@ Route::get('/contato', function () {
     return response('Contato: contato@feira.test', 200)->header('Content-Type', 'text/plain');
 })->name('contato');
 
-Route::get('/cardapio-do-dia', function () {
-    $pratos = [
-        ['nome' => 'Baião de dois', 'preco' => 18.0],
-        ['nome' => 'Tapioca de queijo', 'preco' => 8.5],
-        ['nome' => 'Cuscuz com ovo', 'preco' => 7.0],
-    ];
-
-    return view('cardapio', ['pratos' => $pratos]);
-})->name('cardapio');
+Route::get('/cardapio-do-dia', [CardapioController::class, 'index'])->name('cardapio');
 
 Route::get('/produtos', function () {
     return response('Produtos da feira', 200)->header('Content-Type', 'text/plain');
