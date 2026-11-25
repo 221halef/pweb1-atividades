@@ -221,18 +221,45 @@ d) Use **302** para mudanças temporárias: a Feira Digital mudou o endereço da
 ## A05: O cardápio da feira
 
 ### Saídas
-<!-- curl.exe -i de /cardapio e a linha do Ctrl+U com a Panelada -->
 ```
-(cole aqui a saída do terminal)
+$ curl.exe -i http://127.0.0.1:8000/cardapio
+HTTP/1.1 200 OK
+Content-Type: text/html; charset=utf-8
+
+<!DOCTYPE html>
+<html lang="pt-br">
+...
+    <nav>
+    <a href="http://127.0.0.1:8000">Início</a>
+    <a href="http://127.0.0.1:8000/produtos">Produtos</a>
+    <a href="http://127.0.0.1:8000/cardapio">Cardápio</a>
+    ...
+    <h1>Cardápio do dia</h1>
+    <main>
+            <p>Quantidade de pratos: 3</p>
+            <ul><li>Baião de dois — R$ 18,00</li></ul>
+            <ul><li>Tapioca de queijo — R$ 8,50</li></ul>
+            <ul><li>Cuscuz com ovo — R$ 7,00</li></ul>
+
+$ teste temporário com $pratos = []:
+HTTP/1.1 200 OK
+Content-Type: text/html; charset=utf-8
+            <p>Quantidade de pratos: 0</p>
+            <p>Cardápio do dia ainda não definido.</p>
+
+$ teste temporário com '<b>Panelada</b>' (Ctrl+U):
+            <li>&lt;b&gt;Panelada&lt;/b&gt; — R$ 7,00</li>
 ```
 
 ### Caminho da requisição
-_(ex.: GET /cardapio -> rota (web.php) -> CardapioController@index -> view cardapio -> HTML 200)_
+GET /cardapio -> rota nomeada cardapio (web.php) -> closure -> view cardapio -> layout layouts.app -> HTML 200
 
 ### Respostas
-a) _(responda aqui)_
-b) _(responda aqui)_
-c) _(responda aqui)_
+a) `GET /cardapio -> rota (web.php) -> closure -> view cardapio -> layout layouts.app -> HTML 200`. A closure monta o array `$pratos`, passa para a view e o Blade monta o HTML final dentro do layout.
+
+b) No código-fonte (Ctrl+U) apareceu `<li>&lt;b&gt;Panelada&lt;/b&gt; — R$ 7,00</li>`, ou seja, as tags foram exibidas como texto. Não ficou em negrito porque `{{ $prato['nome'] }}` aplica escape HTML (`htmlspecialchars`): `<` virou `&lt;` e `>` virou `&gt;`. Isso protege o site contra XSS — se um usuário pudesse digitar `<script>...</script>` no nome do prato, o navegador trataria como texto e não executaria o código.
+
+c) O Blade juntou `resources/views/cardapio.blade.php` (conteúdo da seção), `resources/views/layouts/app.blade.php` (layout com `<html>`, Menu, `<title>` e `<h1>`) e `resources/views/partials/menu.blade.php` (incluído pelo layout via `@include`).
 
 
 ## A06: Menu completo e rotas com nome
