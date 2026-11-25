@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CardapioController;
+use App\Http\Controllers\ProdutoController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -91,9 +92,15 @@ Route::get('/contato', function () {
 
 Route::get('/cardapio-do-dia', [CardapioController::class, 'index'])->name('cardapio');
 
-Route::get('/produtos', function () {
-    return response('Produtos da feira', 200)->header('Content-Type', 'text/plain');
-})->name('produtos.index');
+Route::get('/produtos', [ProdutoController::class, 'index'])->name('produtos.index');
+
+Route::get('/produtos/categoria/{categoria}', [ProdutoController::class, 'categoria'])
+    ->whereAlpha('categoria')
+    ->name('produtos.categoria');
+
+Route::get('/produtos/{id}', [ProdutoController::class, 'show'])
+    ->whereNumber('id')
+    ->name('produtos.show');
 
 Route::fallback(function () {
     return response('Página não encontrada', 404)->header('Content-Type', 'text/plain');
