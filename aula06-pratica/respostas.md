@@ -416,18 +416,35 @@ c) É possível porque uma view é só um template: ela recebe os dados por vari
 ## A09: Um produto em JSON
 
 ### Saídas
-<!-- curl.exe -i de um produto que existe, de um que não existe e de /produtos/abc/json -->
 ```
-(cole aqui a saída do terminal)
+$ curl.exe -i http://127.0.0.1:8000/produtos/2/json
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{"id":2,"nome":"Queijo coalho","preco":15,"categoria":"laticinios","estoque":0,"descricao":"Queijo coalho artesanal."}
+
+$ curl.exe -i http://127.0.0.1:8000/produtos/99/json
+HTTP/1.1 404 Not Found
+Content-Type: application/json
+
+{"erro":"Produto 99 n\u00e3o encontrado"}
+
+$ curl.exe -i http://127.0.0.1:8000/produtos/abc/json
+HTTP/1.1 404 Not Found
+Content-Type: text/plain; charset=utf-8
+
+Página não encontrada
 ```
 
 ### Caminho da requisição
-_(ex.: GET /cardapio -> rota (web.php) -> CardapioController@index -> view cardapio -> HTML 200)_
+GET /produtos/2/json -> rota nomeada produtos.show-json (web.php, whereNumber) -> ProdutoController@showJson -> response()->json() -> JSON 200
 
 ### Respostas
-a) _(responda aqui)_
-b) _(responda aqui)_
-c) _(responda aqui)_
+a) As três saídas estão acima. O 404 do item 3 (`/produtos/99/json`) teve `Content-Type: application/json` e corpo `{"erro":"Produto 99 não encontrado"}`. O 404 de `/produtos/abc/json` teve `Content-Type: text/plain; charset=utf-8` e corpo "Página não encontrada", porque o `whereNumber('id')` rejeitou `abc` e a请求 caiu no `Route::fallback`.
+
+b) Quem consome uma API espera dados estruturados. Com `response()->json(['erro' => ...], 404)`, o cliente (um app, um script, outro serviço) pode dar `parse` no corpo e ler o campo `erro` para saber o que aconteceu. Com `abort(404)`, o Laravel devolve uma página HTML de erro, que é boa para pessoas no navegador, mas obriga o cliente JSON a tratar HTML — fora do padrão da resposta.
+
+c) O caminho é `GET /produtos/2/json -> rota (web.php) -> ProdutoController@showJson -> response()->json(...) -> JSON 200`. A **view ficou de fora** porque o método não chama `view()`; ele devolve diretamente uma `JsonResponse` com os dados. Não há HTML para renderizar, então o Blade e o layout não entram no fluxo.
 
 
 ## A10: Inscrição de produtores
