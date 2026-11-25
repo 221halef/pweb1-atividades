@@ -161,19 +161,61 @@ c) O `?` em `{turma?}` torna o parâmetro opcional: a rota atende tanto `/boas-v
 ## A04: Status e redirecionamentos
 
 ### Saídas
-<!-- curl.exe -i de /admin, /em-breve, /loja e /produtos-antigos -->
 ```
-(cole aqui a saída do terminal)
+$ curl.exe -i http://127.0.0.1:8000/admin
+HTTP/1.1 403 Forbidden
+Content-Type: text/html; charset=utf-8
+
+Área restrita
+
+$ curl.exe -i http://127.0.0.1:8000/em-breve
+HTTP/1.1 503 Service Unavailable
+Content-Type: text/html; charset=utf-8
+
+Página em construção
+
+$ curl.exe -i http://127.0.0.1:8000/loja
+HTTP/1.1 302 Found
+Location: http://127.0.0.1:8000/feira
+Content-Type: text/html; charset=utf-8
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="refresh" content="0;url='http://127.0.0.1:8000/feira'" />
+        ...
+
+$ curl.exe -i http://127.0.0.1:8000/produtos-antigos
+HTTP/1.1 301 Moved Permanently
+Location: http://127.0.0.1:8000/produtos
+Content-Type: text/html; charset=utf-8
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="refresh" content="0;url='http://127.0.0.1:8000/produtos'" />
+        ...
+
+$ curl.exe -i -L http://127.0.0.1:8000/loja
+HTTP/1.1 302 Found
+Location: http://127.0.0.1:8000/feira
+HTTP/1.1 200 OK
+Bem-vindo à feira
 ```
 
 ### Caminho da requisição
-_(ex.: GET /cardapio -> rota (web.php) -> CardapioController@index -> view cardapio -> HTML 200)_
+GET /admin -> rota (web.php) -> closure -> response('Área restrita', 403) -> HTML 403
 
 ### Respostas
-a) _(responda aqui)_
-b) _(responda aqui)_
-c) _(responda aqui)_
-d) _(responda aqui)_
+a) As quatro saídas estão acima. As linhas `Location:` dos redirecionamentos são `Location: http://127.0.0.1:8000/feira` (302) e `Location: http://127.0.0.1:8000/produtos` (301).
+
+b) Eu provaria com `curl.exe -i` (ou com a aba Rede do DevTools): a linha de status diz `HTTP/1.1 403 Forbidden`. O navegador exibe o corpo da resposta como uma página normal, mas o código 403 é que comunica ao cliente que o acesso foi negado — o texto sozinho não é um erro HTTP.
+
+c) O navegador fez **duas** requisições: primeiro `GET /loja`, recebeu 302 com `Location`, e depois `GET /feira`, recebendo 200. O `curl.exe -i` mostrou só uma porque, sem a opção `-L`, ele não segue redirecionamentos; com `-L` aparecem as duas respostas, como registrado acima.
+
+d) Use **302** para mudanças temporárias: a Feira Digital mudou o endereço da loja para `/feira` durante uma promoção e pretende voltar a `/loja` depois; os motores de busca devem manter o endereço antigo. Use **301** para mudanças permanentes: o catálogo `/produtos-antigos` foi substituído definitivamente por `/produtos`, então o endereço antigo não voltará e o 301 manda atualizar os links indexados.
 
 
 ## A05: O cardápio da feira
