@@ -9,6 +9,26 @@ Route::get('/', function () {
     ]);
 })->name('inicio');
 
+Route::get('/admin', function () {
+    return response('Área restrita', 403);
+});
+
+Route::get('/em-breve', function () {
+    return response('Página em construção', 503);
+});
+
+Route::get('/loja', function () {
+    return redirect('/feira');
+});
+
+Route::get('/produtos-antigos', function () {
+    return redirect('/produtos', 301);
+});
+
+Route::get('/feira', function () {
+    return response('Bem-vindo à feira', 200);
+});
+
 Route::get('/tabuada/{numero}', function (int $numero) {
     $html = '';
     for ($i = 1; $i <= 10; $i++) {
