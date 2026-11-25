@@ -9,6 +9,22 @@ Route::get('/', function () {
     ]);
 })->name('inicio');
 
+Route::get('/meu-nome', function () {
+    return 'Meu nome é Halef e estudo ADS no IFCE.';
+});
+
+Route::get('/cartao', function () {
+    return '
+        <h2>Halef</h2>
+        <p>Semestre: 4º</p>
+        <ul>
+            <li>Programação web</li>
+            <li>Música</li>
+            <li>Café</li>
+        </ul>
+    ';
+});
+
 Route::get('/sobre', function () {
     return response('Sobre a Feira Digital', 200)->header('Content-Type', 'text/plain');
 })->name('sobre');
