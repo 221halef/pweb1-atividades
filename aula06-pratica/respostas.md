@@ -450,17 +450,58 @@ c) O caminho é `GET /produtos/2/json -> rota (web.php) -> ProdutoController@sho
 ## A10: Inscrição de produtores
 
 ### Saídas
-<!-- mensagens de erro dos testes (a) e (b), mensagem de sucesso do teste (c), curl.exe -i do teste (d) -->
 ```
-(cole aqui a saída do terminal)
+$ Ctrl+U no formulário (campo hidden gerado por @csrf)
+<input type="hidden" name="_token" value="wjwnF4LJqDZlBdnSwkrtwuuL38tNpOzajUcViaRh" autocomplete="off">
+
+$ (a) POST vazio
+HTTP/1.1 302 Found
+Location: http://127.0.0.1:8000/inscricao
+(depois do redirect, na página)
+<li>The nome field is required.</li>
+<li>The email field is required.</li>
+<li>The produto field is required.</li>
+<li>The quantidade field is required.</li>
+<input id="nome" name="nome" value="">
+<input id="email" name="email" type="email" value="">
+<input id="produto" name="produto" value="">
+<input id="quantidade" name="quantidade" type="number" value="">
+<input id="telefone" name="telefone" value="">
+
+$ (b) POST com quantidade 0 e telefone 123
+HTTP/1.1 302 Found
+Location: http://127.0.0.1:8000/inscricao
+<li>The quantidade field must be at least 1.</li>
+<li>The telefone field must be 11 digits.</li>
+<input id="nome" name="nome" value="Ana">
+<input id="email" name="email" type="email" value="ana@example.com">
+<input id="produto" name="produto" value="Mel">
+<input id="quantidade" name="quantidade" type="number" value="0">
+<input id="telefone" name="telefone" value="123">
+
+$ (c) POST com todos os dados válidos
+HTTP/1.1 302 Found
+Location: http://127.0.0.1:8000/inscricao
+(depois do redirect)
+<p class="sucesso">Inscrição recebida: Ana vai trazer 5 de Mel.</p>
+
+$ (d) curl.exe -i -X POST http://127.0.0.1:8000/inscricao (sem @csrf/token)
+HTTP/1.1 419 unknown status
+Content-Type: text/html; charset=utf-8
+
+<!DOCTYPE html>
+... <title>Page Expired</title> ...
 ```
 
 ### Caminho da requisição
-_(ex.: GET /cardapio -> rota (web.php) -> CardapioController@index -> view cardapio -> HTML 200)_
+POST /inscricao -> rota nomeada inscricao.store -> middleware CSRF -> InscricaoController@store -> validate() -> redirect()->route('inscricao.create')->with('mensagem', ...) -> GET /inscricao -> view inscricao -> HTML 200
 
 ### Respostas
-a) _(responda aqui)_
-b) _(responda aqui)_
-c) _(responda aqui)_
-d) _(responda aqui)_
+a) No teste (a) apareceram "The nome field is required.", "The email field is required.", "The produto field is required." e "The quantidade field is required.". No teste (b), "The quantidade field must be at least 1." e "The telefone field must be 11 digits.". No teste (b), os valores já digitados continuaram nos campos (nome=Ana, email=ana@example.com, produto=Mel, quantidade=0, telefone=123). Quem fez isso foi a diretiva `{{ old('campo') }}` em cada `<input>`: ela recupera os dados da requisição anterior guardados na sessão pelo Laravel. As mensagens vieram de `@error` / `$errors->all()`.
+
+b) O `curl.exe` recebeu 419 ("Page Expired") porque o `@csrf` gera um campo oculto `_token` com um token por sessão, e o Laravel exige que esse token seja enviado junto com o cookie da sessão em todo POST. O curl enviou o POST sem o token e sem o cookie, então o middleware `VerifyCsrfToken` rejeitou a requisição. O `@csrf` colocou no formulário o `<input type="hidden" name="_token" value="...">` mostrado acima; o navegador envia esse campo automaticamente no submit.
+
+c) Caminho do teste (c): clique em Enviar -> o navegador faz `POST /inscricao` com os 5 campos + `_token` + cookie da sessão (1ª requisição) -> rota `inscricao.store` -> `InscricaoController@store` valida e chama `redirect()->route('inscricao.create')->with('mensagem', ...)` -> o servidor responde 302 com `Location: .../inscricao` -> o navegador faz `GET /inscricao` (2ª requisição) -> `InscricaoController@create` -> view `inscricao` -> layout exibe `<p class="sucesso">Inscrição recebida: Ana vai trazer 5 de Mel.</p>`. Foram **duas** requisições.
+
+d) O `store()` redireciona para aplicar o padrão **Post/Redirect/Get**: a mensagem foi salva na sessão (`with`) e aparece só uma vez, na página carregada pelo GET. Se o `store()` devolvesse a view diretamente, o POST continuaria sendo a última requisição e ao apertar F5 o navegador reenviaria o mesmo POST (confirmando "reenviar dados do formulário"), podendo duplicar a inscrição.
 
