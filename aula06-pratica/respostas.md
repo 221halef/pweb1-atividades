@@ -265,18 +265,52 @@ c) O Blade juntou `resources/views/cardapio.blade.php` (conteúdo da seção), `
 ## A06: Menu completo e rotas com nome
 
 ### Saídas
-<!-- php artisan route:list --except-vendor e a mensagem de erro do item 4 -->
 ```
-(cole aqui a saída do terminal)
+$ php artisan route:list --except-vendor
+
+  GET|HEAD       / ................................. inicio › routes/web.php:5
+  GET|HEAD       admin ..................................... routes/web.php:12
+  GET|HEAD       boas-vindas-turma/{turma?} ................ routes/web.php:45
+  GET|HEAD       cardapio-do-dia ................ cardapio › routes/web.php:92
+  GET|HEAD       cartao .................................... routes/web.php:72
+  GET|HEAD       contato ......................... contato › routes/web.php:88
+  GET|HEAD       em-breve .................................. routes/web.php:16
+  GET|HEAD       feira ..................................... routes/web.php:28
+  GET|HEAD       idade/{ano} ............................... routes/web.php:40
+  GET|HEAD       loja ...................................... routes/web.php:20
+  GET|HEAD       meu-nome .................................. routes/web.php:49
+  GET|HEAD       perfil-criado ............................. routes/web.php:68
+  GET|HEAD       perfil-json ............................... routes/web.php:64
+  GET|HEAD       produtos ............ produtos.index › routes/web.php:102
+  GET|HEAD       produtos-antigos .......................... routes/web.php:24
+  GET|HEAD       quem-somos ........................ sobre › routes/web.php:84
+  GET|HEAD       tabuada/{numero} .......................... routes/web.php:32
+  GET|HEAD       {fallbackPlaceholder} .................... routes/web.php:106
+
+                                                           Showing [18] routes
+
+$ links gerados no menu depois da mudança de endereço
+href="http://127.0.0.1:8000"
+href="http://127.0.0.1:8000/produtos"
+href="http://127.0.0.1:8000/cardapio-do-dia"
+href="http://127.0.0.1:8000/quem-somos"
+href="http://127.0.0.1:8000/contato"
+
+$ erro provocado: route('sobree') no menu
+HTTP/1.1 500 Internal Server Error
+Content-Type: text/html; charset=utf-8
+(local.ERROR: Route [sobree] not defined. (View: .../partials/menu.blade.php))
 ```
 
 ### Caminho da requisição
-_(ex.: GET /cardapio -> rota (web.php) -> CardapioController@index -> view cardapio -> HTML 200)_
+GET / -> rota nomeada inicio (web.php) -> closure -> view inicio -> layout -> partials/menu -> route() -> HTML 200
 
 ### Respostas
-a) _(responda aqui)_
-b) _(responda aqui)_
-c) _(responda aqui)_
+a) Na listagem, todas as rotas são atendidas por **closure**, inclusive `produtos.index` e `cardapio`. Se fossem controller, a coluna de ação mostraria `ProdutoController@index` (ou `ProdutoController::index`); aqui aparece apenas `routes/web.php:NN`, o que indica que a ação é uma função anônima definida no próprio arquivo de rotas. Nenhuma rota de controller aparece porque ainda não trocamos nenhuma closure nesta etapa.
+
+b) Os links continuaram funcionando porque o menu não contém URLs fixas: ele usa `route('cardapio')` e `route('sobre')`. O helper `route()` consulta o nome da rota no registro do Laravel e devolve o endereço atual. Ao mudar `/cardapio` para `/cardapio-do-dia` e `/sobre` para `/quem-somos` mantendo os mesmos nomes, os links foram gerados automaticamente com os novos caminhos, sem editar as views.
+
+c) A mensagem foi `Route [sobree] not defined. (View: .../resources/views/partials/menu.blade.php)` com status 500. Ela aparece em **todas** as páginas porque o menu está no layout (`@include('partials.menu')` em `layouts/app.blade.php`), e todas as views do site estendem esse layout. Assim, qualquer página que tenta renderizar o menu dispara a exceção.
 
 
 ## A07: Do closure ao controller
