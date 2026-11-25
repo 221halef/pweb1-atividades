@@ -99,18 +99,63 @@ c) Com `media` igual a `8.0`, apareceu `"media":8`, sem a casa decimal. O `json_
 ## A03: Tabuada e idade
 
 ### Saídas
-<!-- curl.exe -i de /tabuada/7, /tabuada/sete, /idade/2005 e /boas-vindas-turma -->
 ```
-(cole aqui a saída do terminal)
+$ curl.exe -i http://127.0.0.1:8000/tabuada/7
+HTTP/1.1 200 OK
+Content-Type: text/html; charset=utf-8
+
+7 x 1 = 7<br>7 x 2 = 14<br>7 x 3 = 21<br>7 x 4 = 28<br>7 x 5 = 35<br>7 x 6 = 42<br>7 x 7 = 49<br>7 x 8 = 56<br>7 x 9 = 63<br>7 x 10 = 70<br>
+
+$ curl.exe -i http://127.0.0.1:8000/tabuada/sete
+HTTP/1.1 404 Not Found
+Content-Type: text/plain; charset=utf-8
+
+Página não encontrada
+
+$ curl.exe -i http://127.0.0.1:8000/idade/2005
+HTTP/1.1 200 OK
+Content-Type: text/html; charset=utf-8
+
+Quem nasceu em 2005 tem ou vai fazer 21 anos em 2026.
+
+$ curl.exe -i http://127.0.0.1:8000/idade/dois-mil
+HTTP/1.1 404 Not Found
+Content-Type: text/plain; charset=utf-8
+
+Página não encontrada
+
+$ curl.exe -i http://127.0.0.1:8000/boas-vindas-turma
+HTTP/1.1 200 OK
+Content-Type: text/html; charset=utf-8
+
+Bem-vinda, turma de ADS!
+
+$ curl.exe -i http://127.0.0.1:8000/boas-vindas-turma/Redes
+HTTP/1.1 200 OK
+Content-Type: text/html; charset=utf-8
+
+Bem-vinda, turma de Redes!
+
+$ teste temporário: sem whereNumber, /tabuada/sete
+HTTP/1.1 500 Internal Server Error
+Content-Type: text/html; charset=utf-8
+(local.ERROR: Argument #1 ($numero) must be of type int, string given)
+
+$ teste temporário: sem valor padrão, /boas-vindas-turma
+HTTP/1.1 500 Internal Server Error
+Content-Type: text/html; charset=utf-8
+(local.ERROR: Too few arguments to function ... 0 passed ... and exactly 1 expected)
 ```
 
 ### Caminho da requisição
-_(ex.: GET /cardapio -> rota (web.php) -> CardapioController@index -> view cardapio -> HTML 200)_
+GET /tabuada/7 -> rota (web.php, com whereNumber) -> closure -> HTML 200
 
 ### Respostas
-a) _(responda aqui)_
-b) _(responda aqui)_
-c) _(responda aqui)_
+a) Apareceu a página de fallback com `HTTP/1.1 404 Not Found` e o texto "Página não encontrada" (`Content-Type: text/plain`). Quem respondeu foi a rota `Route::fallback`, não a rota da tabuada: o `whereNumber('numero)` impediu que `sete` combinasse com `/tabuada/{numero}`, então nenhuma rota normal casou.
+
+b) Sem o `whereNumber`, a rota casou com `sete`, mas a closure recebeu a string `"sete"` num parâmetro tipado como `int`, gerando erro: `Argument #1 ($numero) must be of type int, string given` e status 500. Com a restrição, o Laravel rejeita o parâmetro antes de chamar a closure e devolve um 404 limpo. A restrição é melhor porque evita erro interno, mantém a URL previsível e transforma entrada inválida em uma resposta HTTP adequada.
+
+c) O `?` em `{turma?}` torna o parâmetro opcional: a rota atende tanto `/boas-vindas-turma` quanto `/boas-vindas-turma/Redes`. Ao tirar o valor padrão `'ADS'` da closure, o acesso sem parâmetro gerou `Too few arguments to function ... 0 passed ... and exactly 1 expected` (500), porque a rota casou mas a função exigia um argumento que não veio. O valor padrão é o que garante o fallback "ADS" quando o segmento falta.
 
 
 ## A04: Status e redirecionamentos
