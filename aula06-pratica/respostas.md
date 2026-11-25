@@ -1,24 +1,66 @@
 # Aula 06: Laravel na prática
 
-Nome: _(seu nome)_
+Nome: Halef
 
 Projeto: `aula06-pratica` (Feira Digital)
 
 ## A01: Meu cartão de visita
 
 ### Saídas
-<!-- curl.exe -i de /meu-nome e de /cartao -->
 ```
-(cole aqui a saída do terminal)
+$ curl.exe -i http://127.0.0.1:8000/meu-nome
+HTTP/1.1 200 OK
+Host: 127.0.0.1:8000
+Connection: close
+X-Powered-By: PHP/8.5.12
+Content-Type: text/html; charset=utf-8
+Cache-Control: no-cache, private
+Date: Wed, 25 Nov 2026 22:24:33 GMT
+
+Meu nome é Halef e estudo ADS no IFCE.
+
+$ curl.exe -i http://127.0.0.1:8000/cartao
+HTTP/1.1 200 OK
+Host: 127.0.0.1:8000
+Connection: close
+X-Powered-By: PHP/8.5.12
+Content-Type: text/html; charset=utf-8
+Cache-Control: no-cache, private
+Date: Wed, 25 Nov 2026 22:24:34 GMT
+
+
+        <h2>Halef</h2>
+        <p>Semestre: 4º</p>
+        <ul>
+            <li>Programação web</li>
+            <li>Música</li>
+            <li>Café</li>
+        </ul>
+
+$ curl.exe -i http://127.0.0.1:8000/meu-nome/
+HTTP/1.1 200 OK
+...
+Content-Type: text/html; charset=utf-8
+
+Meu nome é Halef e estudo ADS no IFCE.
+
+$ curl.exe -i http://127.0.0.1:8000/Meu-Nome
+HTTP/1.1 404 Not Found
+...
+Content-Type: text/plain; charset=utf-8
+
+Página não encontrada
 ```
 
 ### Caminho da requisição
-_(ex.: GET /cardapio -> rota (web.php) -> CardapioController@index -> view cardapio -> HTML 200)_
+GET /cartao -> rota (web.php) -> closure -> HTML 200
 
 ### Respostas
-a) _(responda aqui)_
-b) _(responda aqui)_
-c) _(responda aqui)_
+a) As duas respostas tiveram `Content-Type: text/html; charset=utf-8`. Isso acontece porque uma string devolvida diretamente por uma rota já é tratada pelo Laravel como uma resposta HTML — o framework não inspeciona o conteúdo para decidir o tipo. Mesmo `/meu-nome`, que só tem texto sem tags, é enviado como `text/html`; por isso o navegador interpreta as tags de `/cartao` normalmente.
+
+b) `/meu-nome/` (com barra no fim) também respondeu 200 com o mesmo texto: o roteador do Laravel normaliza a barra final e encontra a rota. Já `/Meu-Nome` caiu no `Route::fallback` e respondeu 404 com "Página não encontrada". Portanto, o endereço da rota **diferencia maiúsculas de minúsculas**: o caminho é sensível a caso.
+
+c) O caminho é `GET /cartao -> rota (web.php) -> closure -> HTML 200`. Ficaram de fora o **controller** e a **view**: a lógica está toda na closure e o HTML foi devolvido como string, sem Blade.
 
 
 ## A02: Meu perfil em JSON
